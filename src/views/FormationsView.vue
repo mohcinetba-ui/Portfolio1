@@ -2,27 +2,36 @@
 import { ref } from 'vue'
 import { useFormationsStore } from '@/stores/formations'
 
+// Access the formations store (CRUD list of educational qualifications)
 const formationsStore = useFormationsStore()
 
+// Holds the id of the formation currently being edited, or null when adding a new one
 const editingId = ref(null)
+
+// The form's local state — shared by both "add" and "edit" modes
 const form = ref({ diplome: '', etablissement: '', date_debut: '', date_fin: '', description: '' })
 
+// Clears the form back to empty and exits edit mode
 function resetForm() {
   form.value = { diplome: '', etablissement: '', date_debut: '', date_fin: '', description: '' }
   editingId.value = null
 }
 
+// Handles both add AND edit in one function, based on whether editingId is set
 function submitForm() {
-  if (!form.value.diplome.trim()) return
+  if (!form.value.diplome.trim()) return // guard: diploma name is required
 
   if (editingId.value) {
+    // We're editing an existing formation
     formationsStore.updateFormation(editingId.value, { ...form.value })
   } else {
+    // We're adding a brand new one
     formationsStore.addFormation({ ...form.value })
   }
   resetForm()
 }
 
+// Called when the user clicks "Modifier" on a list item — loads that item into the form
 function startEdit(formation) {
   editingId.value = formation.id
   form.value = {
@@ -34,10 +43,12 @@ function startEdit(formation) {
   }
 }
 
+// Cancels editing without saving changes
 function cancelEdit() {
   resetForm()
 }
 
+// Deletes a formation; if it was the one being edited, reset the form too
 function deleteFormation(id) {
   if (editingId.value === id) resetForm()
   formationsStore.removeFormation(id)
@@ -50,9 +61,11 @@ function deleteFormation(id) {
       <h1 class="h2">Ma formation</h1>
     </header>
 
+    <!-- Single form used for BOTH adding and editing — button label changes based on mode -->
     <form class="formation-form" @submit.prevent="submitForm">
       <input v-model="form.diplome" type="text" placeholder="Diplôme" required>
       <input v-model="form.etablissement" type="text" placeholder="Établissement">
+      <!-- Dates are plain text fields, not date pickers — allows flexible values like "2022" -->
       <input v-model="form.date_debut" type="text" placeholder="Date début (ex: 2022)">
       <input v-model="form.date_fin" type="text" placeholder="Date fin (ex: 2024)">
       <textarea v-model="form.description" placeholder="Description" rows="3"></textarea>
@@ -61,13 +74,16 @@ function deleteFormation(id) {
         <button type="submit" class="btn btn--primary">
           {{ editingId ? 'Modifier' : 'Ajouter' }}
         </button>
+        <!-- Cancel button only appears while editing an existing item -->
         <button v-if="editingId" type="button" class="btn btn--outline" @click="cancelEdit">
           Annuler
         </button>
       </div>
     </form>
 
+    <!-- <ol> (ordered list) instead of <ul> since a timeline has a natural chronological order -->
     <ol v-if="formationsStore.formations.length" class="formation-timeline">
+      <!-- v-for loops over the array; :key gives Vue a stable identity per item -->
       <li v-for="formation in formationsStore.formations" :key="formation.id" class="formation-item">
         <div class="formation-info">
           <h3>{{ formation.diplome }}</h3>
@@ -83,6 +99,7 @@ function deleteFormation(id) {
       </li>
     </ol>
 
+    <!-- Empty state, shown only when the list has zero items -->
     <p v-else class="formations-empty">
       Aucune formation pour l'instant — ajoutez-en une avec le formulaire au-dessus.
     </p>
@@ -153,6 +170,7 @@ function deleteFormation(id) {
   gap: 1rem;
 }
 
+/* Each entry: info on the left, actions on the right, colored left border marks the timeline */
 .formation-item {
   display: flex;
   justify-content: space-between;
@@ -186,6 +204,7 @@ function deleteFormation(id) {
   line-height: 1.5;
 }
 
+/* flex-shrink: 0 keeps the action buttons from getting squeezed when the description text is long */
 .formation-actions {
   display: flex;
   flex-direction: column;

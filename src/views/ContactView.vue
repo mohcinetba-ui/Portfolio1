@@ -3,18 +3,27 @@ import { ref } from 'vue'
 import { useMessagesStore } from '@/stores/messages'
 import { useProfileStore } from '@/stores/profile'
 
+// Store for contact messages (this form will add entries here)
 const messagesStore = useMessagesStore()
+// Profile store, used to display the user's own contact info (email/phone/address)
 const profileStore = useProfileStore()
 
+// Local state for the contact form
 const form = ref({ nom_expediteur: '', email: '', sujet: '', contenu: '' })
+// Flag to show a "sent successfully" confirmation message after submitting
 const sent = ref(false)
 
 function submitForm() {
+  // Guard: name, email and message content are required, otherwise do nothing
   if (!form.value.nom_expediteur.trim() || !form.value.email.trim() || !form.value.contenu.trim()) return
 
+  // Add the message to the store (auto-saved to localStorage via the persistence plugin)
   messagesStore.addMessage({ ...form.value })
+  // Reset the form back to empty after sending
   form.value = { nom_expediteur: '', email: '', sujet: '', contenu: '' }
+  // Show the confirmation message
   sent.value = true
+  // Hide it again automatically after 3 seconds
   setTimeout(() => { sent.value = false }, 3000)
 }
 </script>
@@ -27,6 +36,7 @@ function submitForm() {
 
     <div class="contact-layout">
 
+      <!-- LEFT COLUMN: the user's own contact info (static, pulled from the profile store) -->
       <div class="contact-infos">
         <p v-if="profileStore.profile.email">
           <strong>Email :</strong>
@@ -40,6 +50,7 @@ function submitForm() {
         </p>
       </div>
 
+      <!-- RIGHT COLUMN: form for visitors to send a message -->
       <form class="contact-form" @submit.prevent="submitForm">
         <input v-model="form.nom_expediteur" type="text" placeholder="Votre nom" required>
         <input v-model="form.email" type="email" placeholder="Votre email" required>
@@ -48,6 +59,7 @@ function submitForm() {
 
         <button type="submit" class="btn btn--primary">Envoyer</button>
 
+        <!-- Only shown briefly after a successful submit (3 seconds) -->
         <p v-if="sent" class="contact-sent">Message envoyé avec succès !</p>
       </form>
 
@@ -67,6 +79,7 @@ function submitForm() {
   margin-bottom: 1.5rem;
 }
 
+/* Layout: contact info on the left, form on the right, wraps on narrow screens */
 .contact-layout {
   display: flex;
   gap: 2rem;
@@ -85,7 +98,7 @@ function submitForm() {
 }
 
 .contact-form {
-  flex: 2;
+  flex: 2; /* form takes up twice the space of contact-infos */
   min-width: 280px;
   display: flex;
   flex-direction: column;
@@ -108,7 +121,7 @@ function submitForm() {
   border: none;
   cursor: pointer;
   font-weight: 500;
-  align-self: flex-start;
+  align-self: flex-start; /* button only takes up as much width as its content, not the full row */
 }
 
 .btn--primary {

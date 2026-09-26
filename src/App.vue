@@ -2,17 +2,21 @@
 import { RouterLink, RouterView } from 'vue-router'
 import { useProfileStore } from '@/stores/profile'
 
+// Access the profile store so the logo can display the user's first name
 const profileStore = useProfileStore()
 </script>
 
 <template>
+  <!-- App shell: wraps every page — header + nav stay fixed, only the content below changes -->
   <div class="app-shell">
 
     <header class="app-header">
+      <!-- Logo/brand link — falls back to "Portfolio" if no first name is set yet -->
       <RouterLink to="/" class="app-logo">
         {{ profileStore.profile.prenom || 'Portfolio' }}
       </RouterLink>
 
+      <!-- Main navigation — one RouterLink per view/route -->
       <nav class="app-nav">
         <RouterLink to="/">Accueil</RouterLink>
         <RouterLink to="/a-propos">À propos</RouterLink>
@@ -25,6 +29,7 @@ const profileStore = useProfileStore()
       </nav>
     </header>
 
+    <!-- RouterView renders whichever view matches the current route (Accueil, Contact, etc.) -->
     <main class="app-main">
       <RouterView />
     </main>
@@ -39,6 +44,7 @@ const profileStore = useProfileStore()
   color: #eee;
 }
 
+/* Header bar: logo on the left, nav links on the right, wraps on narrow screens */
 .app-header {
   display: flex;
   align-items: center;
@@ -72,11 +78,14 @@ const profileStore = useProfileStore()
   color: #fff;
 }
 
+/* Vue Router automatically adds this class to whichever link matches the current route exactly —
+   used here to highlight the active page in the nav */
 .app-nav a.router-link-exact-active {
   color: #4f46e5;
   font-weight: 600;
 }
 
+/* Subtracts the header's approximate height (70px) so main content fills the rest of the viewport */
 .app-main {
   min-height: calc(100vh - 70px);
 }

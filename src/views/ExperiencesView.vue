@@ -2,27 +2,36 @@
 import { ref } from 'vue'
 import { useExperiencesStore } from '@/stores/experiences'
 
+// Access the experiences store (CRUD list of work experiences)
 const experiencesStore = useExperiencesStore()
 
+// Holds the id of the experience currently being edited, or null when adding a new one
 const editingId = ref(null)
+
+// The form's local state — shared by both "add" and "edit" modes
 const form = ref({ poste: '', entreprise: '', date_debut: '', date_fin: '', description: '' })
 
+// Clears the form back to empty and exits edit mode
 function resetForm() {
   form.value = { poste: '', entreprise: '', date_debut: '', date_fin: '', description: '' }
   editingId.value = null
 }
 
+// Handles both add AND edit in one function, based on whether editingId is set
 function submitForm() {
-  if (!form.value.poste.trim()) return
+  if (!form.value.poste.trim()) return // guard: job title is required
 
   if (editingId.value) {
+    // We're editing an existing experience
     experiencesStore.updateExperience(editingId.value, { ...form.value })
   } else {
+    // We're adding a brand new one
     experiencesStore.addExperience({ ...form.value })
   }
   resetForm()
 }
 
+// Called when the user clicks "Modifier" on a list item — loads that item into the form
 function startEdit(experience) {
   editingId.value = experience.id
   form.value = {
@@ -34,10 +43,12 @@ function startEdit(experience) {
   }
 }
 
+// Cancels editing without saving changes
 function cancelEdit() {
   resetForm()
 }
 
+// Deletes an experience; if it was the one being edited, reset the form too
 function deleteExperience(id) {
   if (editingId.value === id) resetForm()
   experiencesStore.removeExperience(id)
@@ -50,9 +61,11 @@ function deleteExperience(id) {
       <h1 class="h2">Mon expérience</h1>
     </header>
 
+    <!-- Single form used for BOTH adding and editing — button label changes based on mode -->
     <form class="experience-form" @submit.prevent="submitForm">
       <input v-model="form.poste" type="text" placeholder="Poste" required>
       <input v-model="form.entreprise" type="text" placeholder="Entreprise">
+      <!-- Dates are plain text fields, not date pickers — allows flexible values like "2023" or "Présent" -->
       <input v-model="form.date_debut" type="text" placeholder="Date début (ex: 2023)">
       <input v-model="form.date_fin" type="text" placeholder="Date fin (ex: Présent)">
       <textarea v-model="form.description" placeholder="Description" rows="3"></textarea>
@@ -61,13 +74,16 @@ function deleteExperience(id) {
         <button type="submit" class="btn btn--primary">
           {{ editingId ? 'Modifier' : 'Ajouter' }}
         </button>
+        <!-- Cancel button only appears while editing an existing item -->
         <button v-if="editingId" type="button" class="btn btn--outline" @click="cancelEdit">
           Annuler
         </button>
       </div>
     </form>
 
+    <!-- <ol> (ordered list) is used instead of <ul> since a timeline has a natural chronological order -->
     <ol v-if="experiencesStore.experiences.length" class="experience-timeline">
+      <!-- v-for loops over the array; :key gives Vue a stable identity per item -->
       <li v-for="experience in experiencesStore.experiences" :key="experience.id" class="experience-item">
         <div class="experience-info">
           <h3>{{ experience.poste }}</h3>
@@ -83,6 +99,7 @@ function deleteExperience(id) {
       </li>
     </ol>
 
+    <!-- Empty state, shown only when the list has zero items -->
     <p v-else class="experiences-empty">
       Aucune expérience pour l'instant — ajoutez-en une avec le formulaire au-dessus.
     </p>
@@ -153,6 +170,7 @@ function deleteExperience(id) {
   gap: 1rem;
 }
 
+/* Each entry: info on the left, actions on the right, with a colored left border like a timeline marker */
 .experience-item {
   display: flex;
   justify-content: space-between;
@@ -186,6 +204,7 @@ function deleteExperience(id) {
   line-height: 1.5;
 }
 
+/* flex-shrink: 0 keeps the action buttons from getting squeezed when the description text is long */
 .experience-actions {
   display: flex;
   flex-direction: column;

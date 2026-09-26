@@ -6,45 +6,54 @@ import { useCompetencesStore } from '@/stores/competences'
 import { useExperiencesStore } from '@/stores/experiences'
 import { useFormationsStore } from '@/stores/formations'
 
+// Pull in all four stores — the CV needs data from every one of them
 const profileStore = useProfileStore()
 const competencesStore = useCompetencesStore()
 const experiencesStore = useExperiencesStore()
 const formationsStore = useFormationsStore()
 
+// Tracks whether a PDF is currently being generated (disables the button briefly)
 const generating = ref(false)
 
 function exportPdf() {
   generating.value = true
 
+  // Create a new PDF document (defaults to A4, portrait, in mm units)
   const doc = new jsPDF()
   const marginLeft = 15
-  let y = 20
+  let y = 20 // running vertical cursor — we manually track position and move it down after each block
 
+  // --- Name (title) ---
   doc.setFontSize(20)
   doc.text(`${profileStore.profile.prenom || ''} ${profileStore.profile.nom || ''}`.trim() || 'Nom Prénom', marginLeft, y)
   y += 8
 
+  // --- Job title, in gray ---
   doc.setFontSize(12)
   doc.setTextColor(100)
   doc.text(profileStore.profile.titre || '', marginLeft, y)
   y += 6
 
+  // --- Contact line: only includes fields that are actually filled in ---
   doc.setFontSize(10)
   const contactLine = [profileStore.profile.email, profileStore.profile.telephone, profileStore.profile.adresse]
-    .filter(Boolean)
+    .filter(Boolean) // removes any empty/undefined values
     .join(' · ')
   doc.text(contactLine, marginLeft, y)
   y += 10
 
-  doc.setTextColor(0)
+  doc.setTextColor(0) // reset text color back to black for the rest of the document
 
+  // --- Bio paragraph ---
   if (profileStore.profile.bio) {
     doc.setFontSize(11)
+    // splitTextToSize wraps long text into multiple lines that fit within 180mm width
     const bioLines = doc.splitTextToSize(profileStore.profile.bio, 180)
     doc.text(bioLines, marginLeft, y)
-    y += bioLines.length * 5 + 6
+    y += bioLines.length * 5 + 6 // move y down by (number of lines × line height) + spacing
   }
 
+  // --- Experience section ---
   if (experiencesStore.experiences.length) {
     doc.setFontSize(14)
     doc.text('Expériences', marginLeft, y)
@@ -54,9 +63,9 @@ function exportPdf() {
     experiencesStore.experiences.forEach(exp => {
       doc.setFont(undefined, 'bold')
       doc.text(`${exp.poste} — ${exp.entreprise}`, marginLeft, y)
-      doc.setFont(undefined, 'normal')
+      doc.setFont(undefined, 'normal') // reset back to normal weight for what follows
       y += 5
-      doc.setTextColor(120)
+      doc.setTextColor(120) // gray for the date range
       doc.text(`${exp.date_debut} — ${exp.date_fin}`, marginLeft, y)
       doc.setTextColor(0)
       y += 5
@@ -65,11 +74,12 @@ function exportPdf() {
         doc.text(lines, marginLeft, y)
         y += lines.length * 5
       }
-      y += 4
+      y += 4 // extra gap between each experience entry
     })
     y += 2
   }
 
+  // --- Formation section (same pattern as Experience, different fields) ---
   if (formationsStore.formations.length) {
     doc.setFontSize(14)
     doc.text('Formations', marginLeft, y)
@@ -95,6 +105,7 @@ function exportPdf() {
     y += 2
   }
 
+  // --- Skills section: all skills joined into one wrapped line, e.g. "Vue.js (80%) · CSS (70%)" ---
   if (competencesStore.competences.length) {
     doc.setFontSize(14)
     doc.text('Compétences', marginLeft, y)
@@ -107,6 +118,7 @@ function exportPdf() {
     y += lines.length * 5
   }
 
+  // Triggers the browser's download — filename includes the person's last name
   const fileName = `CV_${profileStore.profile.nom || 'portfolio'}.pdf`
   doc.save(fileName)
 
@@ -119,12 +131,15 @@ function exportPdf() {
 
     <div class="cv-toolbar">
       <h1 class="cv-toolbar-title">Mon CV</h1>
+      <!-- Button disabled while generating, label changes to give feedback -->
       <button class="cv-download-btn" @click="exportPdf" :disabled="generating">
         {{ generating ? 'Génération…' : 'Télécharger en PDF' }}
       </button>
     </div>
 
-    <!-- Classic CV document preview -->
+    <!-- On-screen preview of the CV — this HTML is just for display,
+         it is NOT what gets exported (the PDF is built separately in exportPdf()
+         using jsPDF's own text/positioning commands) -->
     <div class="cv-sheet">
 
       <header class="cv-header">
@@ -210,7 +225,9 @@ function exportPdf() {
   cursor: not-allowed;
 }
 
-/* Classic CV sheet — plain, print-like, minimal styling */
+/* Classic CV sheet — deliberately styled like a printed document (white background,
+   serif font, black borders) rather than the app's dark blueprint theme, since this
+   is meant to look like an actual paper CV */
 .cv-sheet {
   background: #ffffff;
   color: #1f1f1f;
@@ -275,6 +292,7 @@ function exportPdf() {
   margin-bottom: 1rem;
 }
 
+/* Job/diploma title on the left, date range on the right, on the same line */
 .cv-entry-row {
   display: flex;
   justify-content: space-between;
@@ -290,7 +308,7 @@ function exportPdf() {
 .cv-entry-dates {
   font-size: 0.78rem;
   color: #777;
-  white-space: nowrap;
+  white-space: nowrap; /* prevents "2022 — 2024" from wrapping awkwardly onto two lines */
 }
 
 .cv-entry-sub {
@@ -307,6 +325,7 @@ function exportPdf() {
   margin: 0;
 }
 
+/* Skills displayed as wrapping "chip" tags rather than a plain list */
 .cv-skills {
   display: flex;
   flex-wrap: wrap;
@@ -326,7 +345,7 @@ function exportPdf() {
     padding: 2rem 1.5rem;
   }
   .cv-entry-row {
-    flex-direction: column;
+    flex-direction: column; /* date drops below the title instead of squeezing next to it */
     gap: 0.1rem;
   }
 }

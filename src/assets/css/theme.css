@@ -1,64 +1,43 @@
-/* ============================================
-   BLUEPRINT DESIGN SYSTEM — GREEN VARIANT
-   Same technical/drafting structure, recolored
-   around growth: green, white, a touch of yellow.
-   ============================================ */
-
 :root {
   color-scheme: light;
-
-  /* Color */
-  --bp-bg: #f6faf3;
-  --bp-bg-deep: #eaf3e4;
-  --bp-panel: #ffffff;
-  --bp-panel-alt: #e3f0dc;
-  --bp-line: rgba(34, 139, 74, 0.22);
-  --bp-line-strong: rgba(21, 110, 58, 0.45);
-  --bp-ink: #14261a;
-  --bp-ink-muted: #4a6350;
-  --bp-ink-faint: #7c9484;
-  --bp-accent: #22a854;
-  --bp-accent-deep: #167a3c;
-  --bp-accent-light: #b7ecc6;
-  --bp-yellow: #f2b705;
-  --bp-accent-ink: #f6faf3;
-  --bp-danger: #d9534f;
-  --bp-success: #22a854;
 
   /* Type */
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
+/* Reset: every element uses border-box sizing, so padding/border don't add to declared width/height */
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  position: relative;
-  overflow-x: hidden;
+  position: relative; /* needed so the ::before/::after glow blobs can be positioned relative to the page */
+  overflow-x: hidden; /* prevents the glow blobs (which extend past the viewport edges) from causing a horizontal scrollbar */
   font-family: var(--font-sans);
   background: var(--bp-bg);
   color: var(--bp-ink);
+  /* Creates the "blueprint grid paper" background: two overlapping 1px line grids (horizontal + vertical) */
   background-image:
     linear-gradient(var(--bp-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--bp-line) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-attachment: fixed;
+  background-size: 32px 32px; /* size of one grid cell */
+  background-attachment: fixed; /* grid stays fixed in place while scrolling, rather than scrolling with content */
 }
 
-/* Ambient drifting glows — the "dynamic color" signature */
+/* Two soft, blurred glowing circles floating in the background (decorative ambience) */
 body::before,
 body::after {
   content: '';
   position: fixed;
-  border-radius: 50%;
-  filter: blur(70px);
-  z-index: -1;
-  pointer-events: none;
+  border-radius: 50%; /* makes them circular */
+  filter: blur(70px); /* heavy blur turns them into soft glows rather than hard-edged circles */
+  z-index: -1; /* pushes them behind all real page content */
+  pointer-events: none; /* so they never block clicks on content above them */
 }
 
+/* Green glow, top-left */
 body::before {
   top: -15%;
   left: -10%;
@@ -68,6 +47,7 @@ body::before {
   animation: drift-a 20s ease-in-out infinite alternate;
 }
 
+/* Yellow/gold glow, bottom-right */
 body::after {
   bottom: -20%;
   right: -10%;
@@ -77,33 +57,38 @@ body::after {
   animation: drift-b 24s ease-in-out infinite alternate;
 }
 
+/* Slow, subtle drifting motion for the green glow — moves and scales up slightly, then reverses (alternate) */
 @keyframes drift-a {
   0%   { transform: translate(0, 0) scale(1); }
   100% { transform: translate(6%, 8%) scale(1.18); }
 }
 
+/* Same idea for the yellow glow, drifting in a different direction/speed for a more organic feel */
 @keyframes drift-b {
   0%   { transform: translate(0, 0) scale(1); }
   100% { transform: translate(-6%, -6%) scale(1.15); }
 }
 
+/* Accessibility: respects the user's OS-level "reduce motion" setting by disabling the drifting animations */
 @media (prefers-reduced-motion: reduce) {
   body::before, body::after {
     animation: none;
   }
 }
 
+/* All headings use the monospace font, for that technical/blueprint feel */
 h1, h2, h3, h4, h5 {
   font-family: var(--font-mono);
   letter-spacing: 0.02em;
   margin: 0;
 }
 
+/* Links inherit whatever text color surrounds them, instead of the default blue */
 a {
   color: inherit;
 }
 
-/* Blueprint annotation label */
+/* Small uppercase "FIG. 00 — LABEL" style tag used throughout the views (e.g. "FIG. 01 — À PROPOS") */
 .bp-label {
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -116,6 +101,7 @@ a {
   margin-bottom: 0.6rem;
 }
 
+/* Small horizontal dash placed before every .bp-label, like a technical drawing marker */
 .bp-label::before {
   content: '';
   width: 18px;
@@ -123,15 +109,15 @@ a {
   background: var(--bp-accent);
 }
 
-/* Shared card style */
+/* Reusable "card" style used for forms and content boxes (used as .bp-panel in your forms) */
 .bp-panel {
   background: var(--bp-panel);
   border: 1px solid var(--bp-line);
-  border-radius: 2px;
+  border-radius: 2px; /* sharp corners — part of the blueprint theme's technical/drafting look */
   box-shadow: 0 1px 3px rgba(20, 38, 26, 0.05);
 }
 
-/* Shared buttons */
+/* Base button style shared by both primary and outline variants */
 .bp-btn {
   font-family: var(--font-mono);
   font-size: 0.85rem;
@@ -143,26 +129,30 @@ a {
   transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* Subtle lift + glow effect on hover, for all buttons */
 .bp-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(34, 168, 84, 0.25);
 }
 
+/* Filled/solid button variant — used for primary actions (Ajouter, Enregistrer, etc.) */
 .bp-btn--primary {
   background: var(--bp-accent);
   color: var(--bp-accent-ink);
   font-weight: 700;
 }
 
+/* Bordered/transparent button variant — used for secondary actions (Annuler, Modifier) */
 .bp-btn--outline {
   background: transparent;
   border-color: var(--bp-line-strong);
   color: var(--bp-accent-deep);
 }
 
-/* Corner registration marks */
+
+/* Adds small decorative corner brackets (like technical blueprint markings) to any element using this class */
 .bp-corners {
-  position: relative;
+  position: relative; /* needed so the ::before/::after corners can be positioned relative to this element */
 }
 
 .bp-corners::before,
@@ -175,6 +165,7 @@ a {
   opacity: 0.5;
 }
 
+/* Top-left corner bracket: only keeps the left and top borders (border-right/bottom removed) */
 .bp-corners::before {
   top: 12px;
   left: 12px;
@@ -182,6 +173,7 @@ a {
   border-bottom: none;
 }
 
+/* Bottom-right corner bracket: mirror of the above, only keeps right and bottom borders */
 .bp-corners::after {
   bottom: 12px;
   right: 12px;
@@ -189,7 +181,7 @@ a {
   border-top: none;
 }
 
-/* Entrance animation for content blocks */
+/* Simple fade-in-and-rise entrance animation, reused across multiple views (e.g. AccueilView's .bp-fade-in) */
 @keyframes bp-fade-up {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
